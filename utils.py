@@ -1,6 +1,18 @@
 import sqlite3
 
 
+def get_all(query: str):
+    with sqlite3.connect('netflix.db') as conn:
+        conn.row_factory = sqlite3.Row
+
+        result = []
+
+        for item in conn.execute(query).fetchall():
+            result.append(dict(item))
+
+        return result
+
+
 def get_movie_by_name(title):
     with sqlite3.connect('netflix.db') as connection:
         cursor = connection.cursor()
@@ -114,17 +126,26 @@ def get_movie_by_genre(genre):
         return film_list
 
 
-def get_movie_by_cast(actor_1, actor_2):
-    with sqlite3.connect('netflix.db') as connection:
-        cursor = connection.cursor()
-        cursor.execute(
-            f"""SELECT COUNT(`cast`), `cast`
-            FROM netflix
-            WHERE `cast` LIKE '%{actor_1}%' AND `cast` LIKE '%{actor_2}%'
-            ORDER BY `cast`
-            LIMIT 10
-            """)
-        return cursor.fetchall()
+def search_by_cast(name1: str = 'Rose McIver', name2: str = 'Ben Lamb'):
+    query = f"""
+        SELECT * FROM netflix
+        WHERE "cast" LIKE '%Rose McIver%'
+        AND "cast" LIKE '%Ben Lamb%'
+        """
+
+    cast = []
+    set_cast = set()
+    result = get_all(query)
+
+    for item in result:
+        for actor in item['cast'].split(','):
+            cast.append(actor)
+
+    for actor in cast:
+        if cast.count(actor) > 2:
+            set_cast.add(actor)
+
+    return list(set_cast)
 
 
 def find_movie(type, release_year, genre):
